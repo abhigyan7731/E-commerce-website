@@ -27,6 +27,7 @@
     "react-is": "^19.1.1",
     "react-redux": "^9.2.0",
     "recharts": "^3.2.1",
+    "svix": "^1.76.1",
     "ws": "^8.18.3"
   },
   "devDependencies": {
