@@ -15,9 +15,22 @@ export async function POST(request) {
     // ... get all your other form data fields ...
 
     // Your logic to validate data, upload the image, and save to the database goes here.
-
-    // If everything is successful:
-    return NextResponse.json({ message: "Store application submitted successfully!" }, { status: 201 });
+    // Example: create a new store record
+    // You must collect all required fields from formData
+    const storeData = {
+      userId,
+      name,
+      // Add other required fields here, e.g.:
+      username: formData.get("username"),
+      email: formData.get("email"),
+      contact: formData.get("contact"),
+      logo: formData.get("logo"), // or result of image upload
+      description: formData.get("description"),
+      address: formData.get("address"),
+      // status, isActive, etc. will use defaults
+    };
+    const store = await prisma.store.create({ data: storeData });
+    return NextResponse.json({ message: "Store application submitted successfully!", store }, { status: 201 });
 
   } catch (error) {
     console.error("Error creating store:", error);
