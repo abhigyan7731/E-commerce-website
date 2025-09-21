@@ -1,3 +1,14 @@
+// Inngest function to handle coupon creation events
+export const couponCreated = inngest.createFunction(
+    { id: "coupon-created" },
+    { event: "app/coupon/created" },
+    async ({ event }) => {
+        // Log the event for dashboard visibility
+        console.log("Coupon created event received:", event.data);
+        // You can add more logic here if needed
+        return { received: true };
+    }
+);
 import {inngest} from './client'
 import prisma from '@/lib/prisma'
 
