@@ -17,16 +17,29 @@ export async function POST(request) {
     // Your logic to validate data, upload the image, and save to the database goes here.
     // Example: create a new store record
     // You must collect all required fields from formData
+    const logo = formData.get("logo") || ""; // Set default if missing
+    // Ensure user exists before creating store
+    let user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      // Create user with minimal info if not found
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          name: formData.get("name") || "Unknown",
+          email: formData.get("email") || "unknown@example.com",
+          image: "", // Set default or get from Clerk
+        }
+      });
+    }
     const storeData = {
-      userId,
       name,
-      // Add other required fields here, e.g.:
       username: formData.get("username"),
       email: formData.get("email"),
       contact: formData.get("contact"),
-      logo: formData.get("logo"), // or result of image upload
+      logo,
       description: formData.get("description"),
       address: formData.get("address"),
+      user: { connect: { id: userId } }, // Connect to existing user
       // status, isActive, etc. will use defaults
     };
     const store = await prisma.store.create({ data: storeData });
