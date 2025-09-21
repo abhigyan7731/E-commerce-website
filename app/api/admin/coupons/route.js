@@ -28,6 +28,11 @@ export async function POST(request) {
             return NextResponse.json({ error: "unauthorized" }, { status: 401 })
         }
         const body = await request.json()
+        // Check if coupon code already exists
+        const existing = await prisma.coupon.findUnique({ where: { code: body.code } })
+        if (existing) {
+            return NextResponse.json({ error: "Coupon code already exists" }, { status: 400 })
+        }
         await prisma.coupon.create({ data: body })
         const coupons = await prisma.coupon.findMany()
         return NextResponse.json({ message: "Coupon added successfully", coupons })
