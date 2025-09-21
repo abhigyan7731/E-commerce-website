@@ -33,7 +33,13 @@ export async function POST(request) {
         if (existing) {
             return NextResponse.json({ error: "Coupon code already exists" }, { status: 400 })
         }
-        await prisma.coupon.create({ data: body })
+        const createdCoupon = await prisma.coupon.create({ data: body })
+        // Emit Inngest event for coupon creation
+        const { inngest } = await import("@/components/inngest/client")
+        await inngest.send({
+            name: "app/coupon/created",
+            data: createdCoupon
+        })
         const coupons = await prisma.coupon.findMany()
         return NextResponse.json({ message: "Coupon added successfully", coupons })
     } catch (error) {
