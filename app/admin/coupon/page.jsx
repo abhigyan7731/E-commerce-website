@@ -1,4 +1,4 @@
-"use client"
+'use client'
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import toast from "react-hot-toast"
@@ -29,8 +29,8 @@ export default function AdminCoupons() {
             setCoupons(data.coupons)
         } catch (error) {
             toast.error(error?.response?.data?.error || error.message)
-        }
     }
+
 
     const handleAddCoupon = async (e) => {
         e.preventDefault()
@@ -41,6 +41,7 @@ export default function AdminCoupons() {
             const { data } = await axios.post('/api/admin/coupons', newCoupon, { headers: { Authorization: `Bearer ${token}` } })
             toast.success(data.message)
             await fetchCoupons()
+        
         } catch (error) {
             toast.error(error?.response?.data?.error || error.message)
         }
@@ -51,16 +52,18 @@ export default function AdminCoupons() {
     }
 
     const deleteCoupon = async (code) => {
-        try {
-            const confirm = window.confirm("Are you sure you want to delete this coupon?")
-            if(!confirm) return;
-            const token = await getToken()
-            await axios.delete(`/api/admin/coupons?code=${code}`, { headers: { Authorization: `Bearer ${token}` } })
-            await fetchCoupons()
-            toast.success("Coupon deleted successfully")
-        } catch (error) {  
-            toast.error(error?.response?.data?.error || error.message)
-        }
+       try {
+       const confirm = window.confirm("Are you sure you want to delete this coupon?")
+       if(!confirm) return;
+        const token = await getToken()
+    await axios.delete(`/api/admin/coupons?code=${code}`, { headers: { Authorization: `Bearer ${token}` } })
+        await fetchCoupons()
+        toast.success("Coupon deleted successfully")
+         } catch (error) {  
+        toast.error(error?.response?.data?.error || error.message)
+       }
+
+
     }
 
     useEffect(() => {
@@ -69,6 +72,7 @@ export default function AdminCoupons() {
 
     return (
         <div className="text-slate-500 mb-40">
+
             {/* Add Coupon */}
             <form onSubmit={(e) => toast.promise(handleAddCoupon(e), { loading: "Adding coupon..." })} className="max-w-sm text-sm">
                 <h2 className="text-2xl">Add <span className="text-slate-800 font-medium">Coupons</span></h2>
@@ -83,12 +87,14 @@ export default function AdminCoupons() {
                 <input type="text" placeholder="Coupon Description" className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
                     name="description" value={newCoupon.description} onChange={handleChange} required
                 />
+
                 <label>
                     <p className="mt-3">Coupon Expiry Date</p>
                     <input type="date" placeholder="Coupon Expires At" className="w-full mt-1 p-2 border border-slate-200 outline-slate-400 rounded-md"
                         name="expiresAt" value={format(newCoupon.expiresAt, 'yyyy-MM-dd')} onChange={handleChange}
                     />
                 </label>
+
                 <div className="mt-5">
                     <div className="flex gap-2 mt-3">
                         <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
@@ -115,6 +121,7 @@ export default function AdminCoupons() {
                 </div>
                 <button className="mt-4 p-2 px-10 rounded bg-slate-700 text-white active:scale-95 transition">Add Coupon</button>
             </form>
+
             {/* List Coupons */}
             <div className="mt-14">
                 <h2 className="text-2xl">List <span className="text-slate-800 font-medium">Coupons</span></h2>
@@ -151,4 +158,5 @@ export default function AdminCoupons() {
             </div>
         </div>
     )
+}
 }
