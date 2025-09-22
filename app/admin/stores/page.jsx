@@ -27,12 +27,20 @@ export default function AdminStores() {
 
     const toggleIsActive = async (storeId) => {
         try {
-            const token = await getToken()
-            const { data } = await axios.post('/api/admin/toggle-store', { storeId }, { headers: { Authorization: `Bearer ${token}` } })
-            toast.success(data.message)
-            await fetchStores()
+            const token = await getToken();
+            // Find the store and toggle its isActive value
+            const store = stores.find(s => s.id === storeId);
+            if (!store) throw new Error("Store not found");
+            const newIsActive = !store.isActive;
+            const { data } = await axios.post(
+                '/api/admin/toggle-store',
+                { id: storeId, isActive: newIsActive },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(data.message);
+            await fetchStores();
         } catch (error) {
-            toast.error(error?.response?.data?.error || error.message)
+            toast.error(error?.response?.data?.error || error.message);
         }
 
     }

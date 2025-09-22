@@ -27,14 +27,18 @@ export default function AdminApprove() {
     }
 
     const handleApprove = async ({ storeId, status }) => {
-      try{
-        const token = await getToken()
-            const { data } = await axios.get('/api/admin/approve-stores',{storeId, status}, { headers: { Authorization: `Bearer ${token}` } })
-            toast.success(data.message)
-           await fetchStores()
-      } catch (error) {
-        toast.error(error?.response?.data?.error || error.message)
-    }
+            try {
+                const token = await getToken();
+                const { data } = await axios.post(
+                    '/api/admin/approve-stores',
+                    { id: storeId, status },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                toast.success(data.message);
+                await fetchStores();
+            } catch (error) {
+                toast.error(error?.response?.data?.error || error.message);
+            }
 }
 
     useEffect(() => {
