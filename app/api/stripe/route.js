@@ -2,68 +2,86 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+// Initialize Stripe with validation
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+    apiVersion: '2023-10-16',
+});
 
-export async function POST(request) { 
-    try{
-        const body = await request.text()
-        const sig = request.headers.get("Stripe-Signature")
-        const event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
-
-        const handlePaymentIntent = async (paymentIntentId, isPaid) => { 
-            const session = await stripe.checkout.session.list({
-                payment_intent: paymentIntentId
-            })
-            const { orderId, userId, appId} = session.data.sessions[0].metadata
+export async function POST(request) {
+    try {
+        console.log('Stripe webhook received');
         
-        if(appId !== 'gocart'){
-            return NextResponse.json({recived: true , message: 'Invalid appId'})
+        const body = await request.text();
+        const signature = request.headers.get("stripe-signature");
+        
+        if (!signature) {
+            return NextResponse.json({ error: "No signature" }, { status: 400 });
         }
-        const orderIdsArray = orderIds.split(',')
-        if(isPaid){
-            //mark order as paid
-            await Promise.all(orderIdsArray.map(async (orderId) => { 
-                await prisma.order.update({
-                    where: {id: orderId},
-                    data: {isPaid: true}
-                })
-            }))
-            //delete cart from user
-            await prisma.user.update({
-                where: {id: userId},
-                data: {cart: []}
-            })
-
-        }else{
-            //delete order from db
-            await Promise.all(orderIdsArray.map(async (orderId) => { 
-                await prisma.order.delete({
-                    where: {id: orderId}
-                })
-            }))
+        
+        if (!process.env.STRIPE_WEBHOOK_SECRET) {
+            return NextResponse.json({ error: "No webhook secret" }, { status: 500 });
         }
-    }
-
-
-
-        switch (event.type){
-            case 'payment_intent.succeeded': {
-                await handlePaymentIntent(event.data.object.id, true)
-                break;
+        
+        let event;
+        try {
+            event = stripe.webhooks.constructEvent(
+                body,
+                signature,
+                process.env.STRIPE_WEBHOOK_SECRET
+            );
+        } catch (err) {
+            console.error("Webhook signature verification failed:", err.message);
+            return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
         }
-        case 'payment_intent.payment_failed': {
-            await handlePaymentIntent(event.data.object.id, false)
-            break;
+        
+        console.log("Event type:", event.type);
+        
+        // Handle checkout session completed (most reliable)
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            
+            if (session.metadata && session.metadata.appId === 'gocart') {
+                const { orderIds, userId } = session.metadata;
+                
+                if (orderIds && userId) {
+                    const orderIdsArray = orderIds.split(',');
+                    console.log('Processing orders:', orderIdsArray);
+                    
+                    // Update orders
+                    for (const orderId of orderIdsArray) {
+                        try {
+                            await prisma.order.update({
+                                where: { id: orderId },
+                                data: { isPaid: true }
+                            });
+                            console.log('Order updated:', orderId);
+                        } catch (error) {
+                            console.error('Failed to update order:', orderId, error);
+                        }
+                    }
+                    
+                    // Clear cart
+                    try {
+                        await prisma.user.update({
+                            where: { id: userId },
+                            data: { cart: {} }
+                        });
+                        console.log('Cart cleared for user:', userId);
+                    } catch (error) {
+                        console.error('Failed to clear cart:', error);
+                    }
+                }
+            }
         }
-        default: {
-            console.log('Unhandled event type', event.type)
-            break;
-        }
-        }
-        return new Response(null, { status: 200 })
+        
+        return NextResponse.json({ received: true });
+        
     } catch (error) {
-        console.log(error)
-        return NextResponse.json({error: error.message}), {status: 400}
+        console.error('Webhook error:', error);
+        return NextResponse.json(
+            { error: "Webhook handler failed" },
+            { status: 500 }
+        );
     }
 }
 
