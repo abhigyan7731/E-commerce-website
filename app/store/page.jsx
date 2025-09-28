@@ -1,9 +1,10 @@
 'use client'
-import { dummyStoreDashboardData } from "@/assets/assets"
 import Loading from "@/components/Loading"
 import { CircleDollarSignIcon, ShoppingBasketIcon, StarIcon, TagsIcon } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import axios from "axios"
+import { useAuth } from "@clerk/nextjs"
 import { useEffect, useState } from "react"
 
 export default function Dashboard() {
@@ -13,12 +14,15 @@ export default function Dashboard() {
     const router = useRouter()
 
     const [loading, setLoading] = useState(true)
+    const { getToken } = useAuth()
     const [dashboardData, setDashboardData] = useState({
         totalProducts: 0,
         totalEarnings: 0,
         totalOrders: 0,
         ratings: [],
     })
+    const [debugInfo, setDebugInfo] = useState(null)
+    const [showDebug, setShowDebug] = useState(false)
 
     const dashboardCardsData = [
         { title: 'Total Products', value: dashboardData.totalProducts, icon: ShoppingBasketIcon },
@@ -28,8 +32,25 @@ export default function Dashboard() {
     ]
 
     const fetchDashboardData = async () => {
-        setDashboardData(dummyStoreDashboardData)
-        setLoading(false)
+        try {
+            const token = await getToken()
+            const { data } = await axios.get('/api/store/dashboard', { headers: { Authorization: `Bearer ${token}` } })
+            setDashboardData(data.dashboardData)
+        } catch (error) {
+            // leave defaults if error
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const fetchDebugData = async () => {
+        try {
+            const token = await getToken()
+            const { data } = await axios.get('/api/store/diagnostic', { headers: { Authorization: `Bearer ${token}` } })
+            setDebugInfo(data)
+        } catch (error) {
+            console.error('Debug fetch error:', error)
+        }
     }
 
     useEffect(() => {
@@ -40,7 +61,25 @@ export default function Dashboard() {
 
     return (
         <div className=" text-slate-500 mb-28">
-            <h1 className="text-2xl">Seller <span className="text-slate-800 font-medium">Dashboard</span></h1>
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl">Seller <span className="text-slate-800 font-medium">Dashboard</span></h1>
+                <button 
+                    onClick={() => {
+                        setShowDebug(!showDebug)
+                        if (!debugInfo) fetchDebugData()
+                    }}
+                    className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                >
+                    Debug Info
+                </button>
+            </div>
+
+            {showDebug && debugInfo && (
+                <div className="bg-gray-100 p-4 rounded mb-6 text-sm">
+                    <h3 className="font-bold mb-2">Debug Information:</h3>
+                    <pre className="overflow-auto">{JSON.stringify(debugInfo, null, 2)}</pre>
+                </div>
+            )}
 
             <div className="flex flex-wrap gap-5 my-10 mt-4">
                 {
@@ -64,7 +103,11 @@ export default function Dashboard() {
                         <div key={index} className="flex max-sm:flex-col gap-5 sm:items-center justify-between py-6 border-b border-slate-200 text-sm text-slate-600 max-w-4xl">
                             <div>
                                 <div className="flex gap-3">
-                                    <Image src={review.user.image} alt="" className="w-10 aspect-square rounded-full" width={100} height={100} />
+                                    {review.user.image && review.user.image.trim() !== "" ? (
+                                        <Image src={review.user.image} alt="" className="w-10 aspect-square rounded-full" width={100} height={100} />
+                                    ) : (
+                                        <div className="w-10 aspect-square rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">No Image</div>
+                                    )}
                                     <div>
                                         <p className="font-medium">{review.user.name}</p>
                                         <p className="font-light text-slate-500">{new Date(review.createdAt).toDateString()}</p>

@@ -13,10 +13,26 @@ export async function POST(request) {
             return NextResponse.json({ error: "missing user or product info" }, { status: 400 })    
 
         }
-        const storeId = await authSeller(userId)
+        const { storeId } = await authSeller(userId)
         if (!storeId) {
             return NextResponse.json({ error: "unauthorized" }, { status: 401 })
         }
+        
+        // Handle admin temporary store case - allow toggling any product
+        if (storeId === 'admin_temp_store') {
+            const product = await prisma.product.findUnique({
+                where: { id: productId }
+            })
+            if (!product) {
+                return NextResponse.json({ error: "product not found" }, { status: 404 })
+            }
+            await prisma.product.update({
+                where: { id: productId },
+                data: { inStock: !product.inStock }
+            })
+            return NextResponse.json({ message: "product stock status updated successfully" })
+        }
+        
         //  check if product exists
         const product = await prisma.product.findFirst({
             where: { id: productId, storeId }

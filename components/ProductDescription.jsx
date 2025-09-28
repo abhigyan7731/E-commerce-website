@@ -1,6 +1,7 @@
 'use client'
 import { ArrowRight, StarIcon } from "lucide-react"
 import Image from "next/image"
+import { assets } from "@/assets/assets"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -28,9 +29,9 @@ const ProductDescription = ({ product }) => {
             {/* Reviews */}
             {selectedTab === "Reviews" && (
                 <div className="flex flex-col gap-3 mt-14">
-                    {product.rating.map((item,index) => (
+                    {(product.rating || []).map((item,index) => (
                         <div key={index} className="flex gap-5 mb-10">
-                            <Image src={item.user.image} alt="" className="size-10 rounded-full" width={100} height={100} />
+                            <Image src={item.user?.image || assets.upload_area} alt={item.user?.name || "User"} className="size-10 rounded-full" width={100} height={100} />
                             <div>
                                 <div className="flex items-center" >
                                     {Array(5).fill('').map((_, index) => (
@@ -48,10 +49,16 @@ const ProductDescription = ({ product }) => {
 
             {/* Store Page */}
             <div className="flex gap-3 mt-14">
-                <Image src={product.store.logo} alt="" className="size-11 rounded-full ring ring-slate-400" width={100} height={100} />
+                {product.store?.logo ? (
+                    <Image src={product.store.logo} alt={product.store?.name || 'Store'} className="size-11 rounded-full ring ring-slate-400" width={100} height={100} />
+                ) : (
+                    <div className="size-11 rounded-full ring ring-slate-400 bg-gray-200 flex items-center justify-center text-xs text-gray-500">No Logo</div>
+                )}
                 <div>
-                    <p className="font-medium text-slate-600">Product by {product.store.name}</p>
-                    <Link href={`/shop/${product.store.username}`} className="flex items-center gap-1.5 text-green-500"> view store <ArrowRight size={14} /></Link>
+                    <p className="font-medium text-slate-600">Product by {product.store?.name || 'Unknown store'}</p>
+                    {product.store?.username && (
+                        <Link href={`/shop/${product.store.username}`} className="flex items-center gap-1.5 text-green-500"> view store <ArrowRight size={14} /></Link>
+                    )}
                 </div>
             </div>
         </div>

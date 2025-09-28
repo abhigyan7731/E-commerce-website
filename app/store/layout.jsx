@@ -1,17 +1,22 @@
 import StoreLayout from "@/components/store/StoreLayout";
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
 
 export const metadata = {
     title: "GoCart. - Store Dashboard",
     description: "GoCart. - Store Dashboard",
 };
 
-export default function RootAdminLayout({ children }) {
-
+export default function RootStoreLayout({ children }) {
     return (
         <>
-            <StoreLayout>
-                {children}
-            </StoreLayout>
+            <SignedIn>
+                <StoreLayout>
+                    {children}
+                </StoreLayout>
+            </SignedIn>
+            <SignedOut>
+                <RedirectToSignIn />
+            </SignedOut>
         </>
     );
 }

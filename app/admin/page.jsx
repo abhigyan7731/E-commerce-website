@@ -8,7 +8,7 @@ import { CircleDollarSignIcon, ShoppingBasketIcon, StoreIcon, TagsIcon } from "l
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 
-export default function AdminDashboard() {
+export default function Dashboard() {
     const {getToken} = useAuth()
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'

@@ -21,23 +21,30 @@ const OrderItem = ({ order }) => {
                         {order.orderItems.map((item, index) => (
                             <div key={index} className="flex items-center gap-4">
                                 <div className="w-20 aspect-square bg-slate-100 flex items-center justify-center rounded-md">
-                                    <Image
-                                        className="h-14 w-auto"
-                                        src={item.product.images[0]}
-                                        alt="product_img"
-                                        width={50}
-                                        height={50}
-                                    />
+                                    {item.product.images && item.product.images[0] && item.product.images[0].trim() !== "" ? (
+                                        <Image
+                                            className="h-14 w-auto"
+                                            src={item.product.images[0]}
+                                            alt="product_img"
+                                            width={50}
+                                            height={50}
+                                        />
+                                    ) : (
+                                        <div className="h-14 w-14 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">No Image</div>
+                                    )}
                                 </div>
                                 <div className="flex flex-col justify-center text-sm">
                                     <p className="font-medium text-slate-600 text-base">{item.product.name}</p>
                                     <p>{currency}{item.price} Qty : {item.quantity} </p>
                                     <p className="mb-1">{new Date(order.createdAt).toDateString()}</p>
                                     <div>
-                                        {ratings.find(rating => order.id === rating.orderId && item.product.id === rating.productId)
-                                            ? <Rating value={ratings.find(rating => order.id === rating.orderId && item.product.id === rating.productId).rating} />
-                                            : <button onClick={() => setRatingModal({ orderId: order.id, productId: item.product.id })} className={`text-green-500 hover:bg-green-50 transition ${order.status !== "DELIVERED" && 'hidden'}`}>Rate Product</button>
-                                        }</div>
+                                        {(() => {
+                                            const existingRating = ratings && ratings.find(rating => rating && order.id === rating.orderId && item.product.id === rating.productId);
+                                            return existingRating
+                                                ? <Rating value={existingRating.rating} />
+                                                : <button onClick={() => setRatingModal({ orderId: order.id, productId: item.product.id })} className={`text-green-500 hover:bg-green-50 transition ${order.status !== "DELIVERED" && 'hidden'}`}>Rate Product</button>
+                                        })()}
+                                    </div>
                                     {ratingModal && <RatingModal ratingModal={ratingModal} setRatingModal={setRatingModal} />}
                                 </div>
                             </div>

@@ -1,9 +1,12 @@
 'use client'
+import { useAuth } from "@clerk/nextjs"
 import { XIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "react-hot-toast"
+import axios from "axios"
 
 const AddressModal = ({ setShowAddressModal }) => {
+    const { getToken } = useAuth()
 
     const [address, setAddress] = useState({
         name: '',
@@ -25,8 +28,14 @@ const AddressModal = ({ setShowAddressModal }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-
-        setShowAddressModal(false)
+        try {
+            const token = await getToken()
+            await axios.post('/api/address', { address }, { headers: { Authorization: `Bearer ${token}` } })
+            toast.success('Address saved')
+            setShowAddressModal(false)
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+        }
     }
 
     return (

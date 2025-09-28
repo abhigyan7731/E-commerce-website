@@ -1,13 +1,13 @@
 import AdminLayout from "@/components/admin/AdminLayout";
-import { SignedIn, SignedOut, SignIn } from "@clerk/nextjs";
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
+
 
 export const metadata = {
-    title: "GoCart. - Admin",
-    description: "GoCart. - Admin",
+    title: "AURA. - Store Dashboard",
+    description: "AURA. - Store Dashboard",
 };
 
 export default function RootAdminLayout({ children }) {
-
     return (
         <>
             <SignedIn>
@@ -16,9 +16,7 @@ export default function RootAdminLayout({ children }) {
                 </AdminLayout>
             </SignedIn>
             <SignedOut>
-                <div className="flex items-center justify-center min-h-screen">
-                    <SignIn fallbackRedirectUrl="/admin" routing="hash"/>
-                </div>
+                <RedirectToSignIn redirectUrl="/admin" />
             </SignedOut>
         </>
     );

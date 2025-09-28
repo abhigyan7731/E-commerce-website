@@ -7,15 +7,20 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
     try { 
          const { searchParams} = new URL(request.url)
-         const username = searchParams.get("username").toLowerCase();
+         const usernameParam = searchParams.get("username");
 
-         if(!username){
+         if(!usernameParam){
             return NextResponse.json({error: "missing username"}, {status: 400}) 
          }
 
-            const store = await prisma.store.findUnique({
-            where: { username , isActive: true },
-            include: { product: {include: { rating: true } } }
+         const username = usernameParam.toLowerCase();
+
+            const store = await prisma.store.findFirst({
+            where: { 
+                username: username,
+                isActive: true 
+            },
+            include: { Product: {include: { rating: true } } }
             })
 
             if(!store){

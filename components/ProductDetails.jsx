@@ -5,6 +5,7 @@ import { StarIcon, TagIcon, EarthIcon, CreditCardIcon, UserIcon } from "lucide-r
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
+import { assets } from "@/assets/assets";
 import Counter from "./Counter";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -18,26 +19,30 @@ const ProductDetails = ({ product }) => {
 
     const router = useRouter()
 
-    const [mainImage, setMainImage] = useState(product.images[0]);
+    const validImages = (product.images || []).filter(Boolean)
+    const fallbackImage = assets.upload_area
+    const [mainImage, setMainImage] = useState(validImages[0] || fallbackImage);
 
     const addToCartHandler = () => {
         dispatch(addToCart({ productId }))
     }
 
-    const averageRating = product.rating.reduce((acc, item) => acc + item.rating, 0) / product.rating.length;
+    const averageRating = (product.rating?.length || 0) > 0
+        ? product.rating.reduce((acc, item) => acc + item.rating, 0) / product.rating.length
+        : 0;
     
     return (
         <div className="flex max-lg:flex-col gap-12">
             <div className="flex max-sm:flex-col-reverse gap-3">
                 <div className="flex sm:flex-col gap-3">
-                    {product.images.map((image, index) => (
-                        <div key={index} onClick={() => setMainImage(product.images[index])} className="bg-slate-100 flex items-center justify-center size-26 rounded-lg group cursor-pointer">
-                            <Image src={image} className="group-hover:scale-103 group-active:scale-95 transition" alt="" width={45} height={45} />
+                    {validImages.map((image, index) => (
+                        <div key={index} onClick={() => setMainImage(validImages[index])} className="bg-slate-100 flex items-center justify-center size-26 rounded-lg group cursor-pointer">
+                            <Image src={image} className="group-hover:scale-103 group-active:scale-95 transition" alt="Product image" width={45} height={45} />
                         </div>
                     ))}
                 </div>
                 <div className="flex justify-center items-center h-100 sm:size-113 bg-slate-100 rounded-lg ">
-                    <Image src={mainImage} alt="" width={250} height={250} />
+                    <Image src={mainImage} alt={product.name || 'Product'} width={250} height={250} />
                 </div>
             </div>
             <div className="flex-1">

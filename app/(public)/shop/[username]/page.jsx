@@ -5,7 +5,9 @@ import { useEffect, useState } from "react"
 import { MailIcon, MapPinIcon } from "lucide-react"
 import Loading from "@/components/Loading"
 import Image from "next/image"
-import { dummyStoreData, productDummyData } from "@/assets/assets"
+import axios from "axios"
+import toast from "react-hot-toast"
+
 
 export default function StoreShop() {
 
@@ -15,9 +17,15 @@ export default function StoreShop() {
     const [loading, setLoading] = useState(true)
 
     const fetchStoreData = async () => {
-        setStoreInfo(dummyStoreData)
-        setProducts(productDummyData)
-        setLoading(false)
+        try {
+            const { data } = await axios.get(`/api/store/data?username=${username}`)
+            setStoreInfo(data.store)
+            setProducts(data.store.Product)
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
@@ -30,13 +38,19 @@ export default function StoreShop() {
             {/* Store Info Banner */}
             {storeInfo && (
                 <div className="max-w-7xl mx-auto bg-slate-50 rounded-xl p-6 md:p-10 mt-6 flex flex-col md:flex-row items-center gap-6 shadow-xs">
-                    <Image
-                        src={storeInfo.logo}
-                        alt={storeInfo.name}
-                        className="size-32 sm:size-38 object-cover border-2 border-slate-100 rounded-md"
-                        width={200}
-                        height={200}
-                    />
+                    {storeInfo.logo && storeInfo.logo.trim() !== "" ? (
+                        <Image
+                            src={storeInfo.logo}
+                            alt={storeInfo.name}
+                            className="size-32 sm:size-38 object-cover border-2 border-slate-100 rounded-md"
+                            width={200}
+                            height={200}
+                        />
+                    ) : (
+                        <div className="size-32 sm:size-38 bg-gray-200 border-2 border-slate-100 rounded-md flex items-center justify-center text-gray-500 text-sm font-medium">
+                            No Logo
+                        </div>
+                    )}
                     <div className="text-center md:text-left">
                         <h1 className="text-3xl font-semibold text-slate-800">{storeInfo.name}</h1>
                         <p className="text-sm text-slate-600 mt-2 max-w-lg">{storeInfo.description}</p>

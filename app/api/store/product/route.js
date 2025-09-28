@@ -18,9 +18,9 @@ export async function POST(request) {
         const mrp =  Number(formData.get("mrp"))
         const price = Number (formData.get("price"))
         const category = formData.get("category")
-        const quantity = formData.get("quantity")
-        const image = formData.get("image") 
-        if (!name || !description || !mrp || !price || !category || !quantity || !image) {
+        // Collect all images appended under the same key "image"
+        const images = formData.getAll("image")
+        if (!name || !description || !mrp || !price || !category || images.length === 0) {
             return NextResponse.json({ error: "missing product info" }, { status: 400 })
         }
         // upload image to imagekit
@@ -50,7 +50,6 @@ export async function POST(request) {
                 mrp,
                 price,
                 category,
-                quantity,
                 images: imagesUrl,
                 storeId
             }
@@ -70,6 +69,15 @@ export async function GET(request) {
         if (!storeId) {
             return NextResponse.json({ error: "unauthorized" }, { status: 401 })
         }
+        
+        // Handle admin temporary store case - return all products from all stores
+        if (storeId === 'admin_temp_store') {
+            const products = await prisma.product.findMany({
+                include: { store: true }
+            })
+            return NextResponse.json({ products })
+        }
+        
         const products = await prisma.product.findMany({
             where: {storeId }})
         return NextResponse.json({ products })
