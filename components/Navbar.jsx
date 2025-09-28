@@ -1,5 +1,5 @@
 'use client'
-import { PackageIcon, Search, ShoppingCart } from "lucide-react";
+import { PackageIcon, Search, ShoppingCart, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,6 +12,7 @@ const Navbar = () => {
     const router = useRouter();
 
     const [search, setSearch] = useState('')
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const cartCount = useSelector(state => state.cart.total)
 
     const handleSearch = (e) => {
@@ -21,13 +22,13 @@ const Navbar = () => {
 
     return (
         <nav className="relative bg-white">
-            <div className="mx-6">
-                <div className="flex items-center justify-between max-w-7xl mx-auto py-4  transition-all">
+            <div className="mx-4 sm:mx-6">
+                <div className="flex items-center justify-between max-w-7xl mx-auto py-3 sm:py-4 transition-all">
 
-                    <Link href="/" className="relative text-4xl font-semibold text-slate-700">
-                        <span className="text-green-600">go</span>cart<span className="text-green-600 text-5xl leading-0">.</span>
+                    <Link href="/" className="relative text-2xl sm:text-4xl font-semibold text-slate-700">
+                        <span className="text-green-600">go</span>cart<span className="text-green-600 text-3xl sm:text-5xl leading-0">.</span>
                         <Protect plan='plus'>
-                        <p className="absolute text-xs font-semibold -top-1 -right-8 px-3 p-0.5 rounded-full flex items-center gap-2 text-white bg-green-500">
+                        <p className="absolute text-xs font-semibold -top-1 -right-6 sm:-right-8 px-2 sm:px-3 p-0.5 rounded-full flex items-center gap-2 text-white bg-green-500">
                             plus
                         </p>
                         </Protect>
@@ -67,33 +68,87 @@ const Navbar = () => {
                        
                     </div>
 
-                    {/* Mobile User Button  */}
-                    <div className="sm:hidden">
-                        {
+                    {/* Mobile Menu */}
+                    <div className="sm:hidden flex items-center gap-3">
+                        {/* Mobile Cart */}
+                        <Link href="/cart" className="relative flex items-center text-slate-600">
+                            <ShoppingCart size={20} />
+                            {cartCount > 0 && (
+                                <span className="absolute -top-1 -right-1 text-[8px] text-white bg-slate-600 size-3.5 rounded-full flex items-center justify-center">{cartCount}</span>
+                            )}
+                        </Link>
+                        
+                        {/* Mobile Menu Toggle */}
+                        <button 
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="text-slate-600 p-1"
+                        >
+                            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
+                        
+                        {/* Mobile User Section (when menu is closed) */}
+                        {!mobileMenuOpen && (
                             user ? (
-                                <div>
-                                     <UserButton>
-                                    <UserButton.MenuItems>
-                                        <UserButton.Action labelIcon={<ShoppingCart size={16}/>} label="Cart" onClick={()=> router.push('/Cart')}/>
-                                    </UserButton.MenuItems>
-                                </UserButton>
-                                 <UserButton>
+                                <UserButton>
                                     <UserButton.MenuItems>
                                         <UserButton.Action labelIcon={<PackageIcon size={16}/>} label="My orders" onClick={()=> router.push('/orders')}/>
                                     </UserButton.MenuItems>
                                 </UserButton>
-                                </div>
                             ) : (
-                                 <button  onClick={openSignIn} className="px-7 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-sm transition text-white rounded-full">
-                            Login
-                        </button>
+                                <button onClick={openSignIn} className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-sm transition text-white rounded-full">
+                                    Login
+                                </button>
                             )
-                        }
-                        <button  onClick={openSignIn} className="px-7 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-sm transition text-white rounded-full">
-                            Login
-                        </button>
+                        )}
                     </div>
                 </div>
+                
+                {/* Mobile Menu Dropdown */}
+                {mobileMenuOpen && (
+                    <div className="sm:hidden bg-white border-t border-gray-200 py-4 px-4">
+                        <div className="flex flex-col space-y-4">
+                            {/* Mobile Search */}
+                            <form onSubmit={handleSearch} className="flex items-center gap-2 bg-slate-100 px-4 py-3 rounded-full">
+                                <Search size={18} className="text-slate-600" />
+                                <input 
+                                    className="w-full bg-transparent outline-none placeholder-slate-600 text-sm" 
+                                    type="text" 
+                                    placeholder="Search products" 
+                                    value={search} 
+                                    onChange={(e) => setSearch(e.target.value)} 
+                                    required 
+                                />
+                            </form>
+                            
+                            {/* Mobile Navigation Links */}
+                            <div className="flex flex-col space-y-3 text-slate-600">
+                                <Link href="/" className="py-2" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+                                <Link href="/shop" className="py-2" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
+                                <Link href="/" className="py-2" onClick={() => setMobileMenuOpen(false)}>About</Link>
+                                <Link href="/" className="py-2" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+                                
+                                {user && (
+                                    <Link href="/orders" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Orders</Link>
+                                )}
+                            </div>
+                            
+                            {/* Mobile User Actions */}
+                            <div className="pt-4 border-t border-gray-200">
+                                {!user && (
+                                    <button 
+                                        onClick={() => {
+                                            openSignIn()
+                                            setMobileMenuOpen(false)
+                                        }} 
+                                        className="w-full px-6 py-3 bg-indigo-500 hover:bg-indigo-600 transition text-white rounded-full"
+                                    >
+                                        Login
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
             <hr className="border-gray-300" />
         </nav>
