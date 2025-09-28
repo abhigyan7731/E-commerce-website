@@ -8,20 +8,35 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
     try {
         const { userId } = getAuth(request)
-        const { storeId } = await authSeller(userId)
-        if (!storeId) {
-            return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+        const authResult = await authSeller(userId)
+        
+        if (!authResult || !authResult.storeId) {
+            return NextResponse.json({ error: "Unauthorized: No valid store found" }, { status: 401 })
         }
+        
+        const { storeId, isAdmin } = authResult
+        
         const formData = await request.formData()
         const name = formData.get("name")
         const description = formData.get("description")
-        const mrp =  Number(formData.get("mrp"))
-        const price = Number (formData.get("price"))
+        const mrp = Number(formData.get("mrp"))
+        const price = Number(formData.get("price"))
         const category = formData.get("category")
+        
         // Collect all images appended under the same key "image"
         const images = formData.getAll("image")
+        
+        // Input validation
         if (!name || !description || !mrp || !price || !category || images.length === 0) {
-            return NextResponse.json({ error: "missing product info" }, { status: 400 })
+            return NextResponse.json({ error: "Missing required product information" }, { status: 400 })
+        }
+        
+        if (mrp <= 0 || price <= 0) {
+            return NextResponse.json({ error: "Prices must be greater than 0" }, { status: 400 })
+        }
+        
+        if (price > mrp) {
+            return NextResponse.json({ error: "Offer price cannot be greater than actual price" }, { status: 400 })
         }
         // upload image to imagekit
         const imagesUrl = await Promise.all(images.map( async (image) => {   
@@ -64,26 +79,42 @@ export async function POST(request) {
 // get all products of a store
 export async function GET(request) {
     try { 
-         const { userId } = getAuth(request)
-        const { storeId } = await authSeller(userId)
-        if (!storeId) {
-            return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+        const { userId } = getAuth(request)
+        const authResult = await authSeller(userId)
+        
+        if (!authResult || !authResult.storeId) {
+            return NextResponse.json({ error: "Unauthorized: No valid store found" }, { status: 401 })
         }
         
-        // Handle admin temporary store case - return all products from all stores
-        if (storeId === 'admin_temp_store') {
+        const { storeId, isAdmin } = authResult
+        
+        // Handle admin case - return all products from all stores for admin view
+        if (isAdmin) {
             const products = await prisma.product.findMany({
-                include: { store: true }
+                include: { 
+                    store: {
+                        select: {
+                            id: true,
+                            name: true,
+                            description: true
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
             })
-            return NextResponse.json({ products })
+            return NextResponse.json({ products, isAdmin: true })
         }
         
+        // Regular store owner - return only their products
         const products = await prisma.product.findMany({
-            where: {storeId }})
+            where: { storeId },
+            orderBy: { createdAt: 'desc' }
+        })
+        
         return NextResponse.json({ products })
     } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: error.code || error.messgae }, { status: 400 })
+        console.error('Error fetching products:', error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
 }
        
